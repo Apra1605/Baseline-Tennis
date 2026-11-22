@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tennis Animation Preview</title>
+<link rel="icon" href="data:,">
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #101820;
+  font-family: Arial, sans-serif;
+}
+canvas { display: block; }
+#ui {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  width: min(320px, 92vw);
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(10, 16, 24, 0.88);
+  color: #edf4fb;
+  box-shadow: 0 16px 32px rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+}
+#title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+#status {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(237,244,251,0.82);
+}
+#buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, #2d78ff, #1855c9);
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+button.secondary {
+  background: linear-gradient(180deg, #3a4654, #27313d);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#tips {
+  margin-top: 10px;
+  font-size: 11px;
+  color: rgba(237,244,251,0.66);
+}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/+esm"
+  }
+}
+</script>
+</head>
+<body>
+<div id="ui">
+  <div id="title">Animation Preview</div>
+  <div id="status">Loading `forhand-retarget.fbx`...</div>
+  <div id="buttons">
+    <button id="playHit" disabled>Play Forehand</button>
+    <button id="playIdle" class="secondary" disabled>Reset Pose</button>
+  </div>
+  <div id="tips">Direct preview of `forhand-retarget.fbx` only.</div>
+</div>
+
+<script type="module">
+import * as THREE from "three";
+import { FBXLoader } from "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/loaders/FBXLoader.js";
+
+const statusEl = document.getElementById("status");
+const playHitBtn = document.getElementById("playHit");
+const playIdleBtn = document.getElementById("playIdle");
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xbfd0df);
+scene.fog = new THREE.Fog(0xbfd0df, 35, 110);
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 500);
+camera.position.set(0, 14, 28);
+camera.lookAt(0, 8, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xeaf4ff, 0x6a7480, 1.2));
+
+const dir = new THREE.DirectionalLight(0xffffff, 1.55);
+dir.position.set(10, 24, 12);
+dir.castShadow = true;
+dir.shadow.mapSize.set(2048, 2048);
+dir.shadow.camera.near = 1;
+dir.shadow.camera.far = 80;
+dir.shadow.camera.left = -20;
+dir.shadow.camera.right = 20;
+dir.shadow.camera.top = 20;
+dir.shadow.camera.bottom = -20;
+scene.add(dir);
+
+const floor = new THREE.Mesh(
+  new THREE.CircleGeometry(26, 64),
+  new THREE.MeshStandardMaterial({ color: 0xced8e1, roughness: 0.95, metalness: 0.02 })
+);
+floor.rotation.x = -Math.PI * 0.5;
+floor.receiveShadow = true;
+scene.add(floor);
+
+const ring = new THREE.Mesh(
+  new THREE.RingGeometry(5.5, 5.7, 48),
+  new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+);
+ring.rotation.x = -Math.PI * 0.5;
+ring.position.y = 0.01;
+scene.add(ring);
+
+function setStatus(text){
+  statusEl.textContent = text;
+}
+
+const fbxLoader = new FBXLoader();
+let mixer = null;
+let character = null;
+let hitAction = null;
+
+function playHit(){
+  if(!hitAction || !character) return;
+  hitAction.reset();
+  hitAction.enabled = true;
+  hitAction.paused = false;
+  hitAction.setEffectiveWeight(1);
+  hitAction.play();
+  setStatus("Forehand animation playing.");
+}
+
+function returnIdle(){
+  if(!character) return;
+  if(hitAction){
+    hitAction.stop();
+    hitAction.setEffectiveWeight(0);
+  }
+  if(mixer) mixer.setTime(0);
+  setStatus("Pose reset.");
+}
+
+new Promise((resolve, reject)=>fbxLoader.load("./models/forhand-retarget.fbx", resolve, undefined, reject))
+.then((forehandFbx)=>{
+  character = forehandFbx;
+  character.traverse((o)=>{
+    if(o.isMesh){
+      o.castShadow = true;
+      o.receiveShadow = true;
+    }
+  });
+  const box = new THREE.Box3().setFromObject(character);
+  if(Number.isFinite(box.min.y)){
+    character.position.y += -box.min.y;
+  }
+  character.rotation.y = Math.PI;
+  scene.add(character);
+
+  mixer = new THREE.AnimationMixer(character);
+  const hitClip = (forehandFbx.animations && forehandFbx.animations.length > 0) ? forehandFbx.animations[0] : null;
+  if(hitClip){
+    hitAction = mixer.clipAction(hitClip);
+    hitAction.setLoop(THREE.LoopOnce, 1);
+    hitAction.clampWhenFinished = true;
+    hitAction.enabled = true;
+    hitAction.paused = true;
+    hitAction.setEffectiveWeight(0);
+    hitAction.play();
+    playHit();
+  }
+
+  playHitBtn.disabled = !hitAction;
+  playIdleBtn.disabled = !character;
+  setStatus(`Loaded. Forehand: ${hitAction ? "ready" : "missing"}.`);
+}).catch((err)=>{
+  console.error(err);
+  setStatus(`Load failed: ${err?.message || err}`);
+});
+
+playHitBtn.addEventListener("click", playHit);
+playIdleBtn.addEventListener("click", returnIdle);
+
+window.addEventListener("resize", ()=>{
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(()=>{
+  const dt = Math.min(clock.getDelta(), 1 / 30);
+  if(mixer) mixer.update(dt);
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tennis Game - Sign In</title>
+  <style>
+    :root {
+      --bg-top: #0f2433;
+      --bg-bot: #07131c;
+      --card: rgba(10, 22, 32, 0.88);
+      --line: #d6e8f8;
+      --accent: #d6f14b;
+      --accent-2: #44d7ff;
+      --text: #f2f8ff;
+      --muted: #a8bfd1;
+      --danger: #ff7a7a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 20%, rgba(68, 215, 255, 0.16), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(214, 241, 75, 0.13), transparent 30%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bot));
+      overflow: hidden;
+    }
+
+    .court-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.22;
+      background:
+        linear-gradient(90deg, transparent 0 10%, rgba(214, 232, 248, 0.35) 10% 10.6%, transparent 10.6% 89.4%, rgba(214, 232, 248, 0.35) 89.4% 90%, transparent 90% 100%),
+        linear-gradient(0deg, transparent 0 12%, rgba(214, 232, 248, 0.35) 12% 12.6%, transparent 12.6% 87.4%, rgba(214, 232, 248, 0.35) 87.4% 88%, transparent 88% 100%),
+        linear-gradient(90deg, transparent 49.8%, rgba(214, 232, 248, 0.35) 49.8% 50.2%, transparent 50.2%);
+      transform: perspective(700px) rotateX(56deg) scale(1.35);
+      transform-origin: center 68%;
+    }
+
+    .card {
+      width: min(92vw, 460px);
+      border: 1px solid rgba(182, 209, 228, 0.3);
+      border-radius: 18px;
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      padding: 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.75rem;
+      line-height: 1.1;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 8px 0 18px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(68, 215, 255, 0.1);
+      border: 1px solid rgba(68, 215, 255, 0.35);
+      color: #dff7ff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      margin-bottom: 10px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.08s ease, filter 0.2s ease;
+    }
+
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .google-btn {
+      background: linear-gradient(90deg, var(--accent), #eaf7a6);
+      color: #10202d;
+    }
+
+    .play-btn {
+      margin-top: 10px;
+      background: linear-gradient(90deg, var(--accent-2), #b6efff);
+      color: #062130;
+      display: none;
+    }
+
+    .logout-btn {
+      margin-top: 8px;
+      background: transparent;
+      border: 1px solid rgba(214, 232, 248, 0.4);
+      color: #d6e8f8;
+      display: none;
+    }
+
+    .name-wrap {
+      margin-top: 10px;
+      display: none;
+      gap: 8px;
+      flex-direction: column;
+    }
+
+    .name-wrap label {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .name-wrap input {
+      width: 100%;
+      border: 1px solid rgba(214, 232, 248, 0.35);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.24);
+      color: var(--text);
+      padding: 10px 11px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .name-wrap input:focus {
+      border-color: rgba(68, 215, 255, 0.75);
+      box-shadow: 0 0 0 2px rgba(68, 215, 255, 0.18);
+    }
+
+    .save-btn {
+      background: linear-gradient(90deg, #9cf8c3, #cafbe3);
+      color: #072118;
+      margin-top: 2px;
+    }
+
+    .status {
+      margin-top: 14px;
+      min-height: 22px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .status.error { color: var(--danger); }
+    .status.ok { color: #9ff2bb; }
+
+    .userbox {
+      margin-top: 12px;
+      border: 1px solid rgba(214, 232, 248, 0.2);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(214, 232, 248, 0.4);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .meta {
+      line-height: 1.2;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+
+    .meta strong {
+      display: block;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="court-bg" aria-hidden="true"></div>
+
+  <main class="card">
+    <div class="pill">Center Court Access</div>
+    <h1 class="title">Sign in to Tennis Game</h1>
+    <p class="subtitle">Google authentication is used for both sign in and sign up.</p>
+
+    <button id="googleBtn" class="google-btn">Continue with Google</button>
+    <button id="playBtn" class="play-btn">Continue</button>
+    <button id="logoutBtn" class="logout-btn">Sign Out</button>
+
+    <div id="nameWrap" class="name-wrap">
+      <label for="firstNameInput">Choose your username / character name</label>
+      <input id="firstNameInput" type="text" maxlength="24" placeholder="e.g. AceRunner7" autocomplete="off" />
+      <button id="saveNameBtn" class="save-btn">Save Username</button>
+    </div>
+
+    <div id="userBox" class="userbox">
+      <img id="avatar" class="avatar" alt="User avatar" />
+      <div class="meta">
+        <strong id="userName">Player</strong>
+        <span id="userEmail"></span>
+      </div>
+    </div>
+
+    <div id="status" class="status">Waiting for authentication...</div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      get,
+      set,
+      remove,
+      runTransaction
+    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDRT4cwQDS81HqAQEFOQUce7AY7jiqeTVQ",
+      authDomain: "picknick-backpack-18839.firebaseapp.com",
+      databaseURL: "https://picknick-backpack-18839-default-rtdb.firebaseio.com",
+      projectId: "picknick-backpack-18839",
+      storageBucket: "picknick-backpack-18839.firebasestorage.app",
+      messagingSenderId: "415009432712",
+      appId: "1:415009432712:web:a10cd8ea71da7cfe51ab3d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+
+    const googleBtn = document.getElementById("googleBtn");
+    const playBtn = document.getElementById("playBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const statusEl = document.getElementById("status");
+    const userBox = document.getElementById("userBox");
+    const userName = document.getElementById("userName");
+    const userEmail = document.getElementById("userEmail");
+    const avatar = document.getElementById("avatar");
+    const nameWrap = document.getElementById("nameWrap");
+    const firstNameInput = document.getElementById("firstNameInput");
+    const saveNameBtn = document.getElementById("saveNameBtn");
+    let currentUser = null;
+
+    function nameKeyForUid(uid) {
+      return `tennis_username_${uid}`;
+    }
+
+    function getSavedFirstName(uid) {
+      if (!uid) return "";
+      const username = (localStorage.getItem(nameKeyForUid(uid)) || "").trim();
+      if (username) return username;
+      return (localStorage.getItem(`tennis_first_name_${uid}`) || "").trim();
+    }
+
+    function saveFirstName(uid, firstName) {
+      localStorage.setItem(nameKeyForUid(uid), firstName);
+      localStorage.setItem("tennis_active_player_name", firstName);
+    }
+
+    function normalizeUsername(input) {
+      return input.replace(/\s+/g, " ").trim();
+    }
+
+    function usernameCanonical(input) {
+      return normalizeUsername(input).toLowerCase();
+    }
+
+    function emailKey(email) {
+      const normalized = String(email || "").toLowerCase().trim();
+      // Firebase RTDB keys cannot contain . # $ / [ ]
+      // Convert to a compact base64url key to keep it path-safe.
+      const utf8 = unescape(encodeURIComponent(normalized));
+      const b64 = btoa(utf8);
+      return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+
+    async function upsertUsernameForUser(user, usernameDisplay) {
+      const email = user?.email || "";
+      if (!email) return { ok: false, reason: "missing-email" };
+
+      const display = normalizeUsername(usernameDisplay);
+      const canonical = usernameCanonical(display);
+      const eKey = emailKey(email);
+      const userRef = ref(db, `usersByEmail/${eKey}`);
+      const userSnap = await get(userRef);
+      const oldCanonical = userSnap.exists() ? (userSnap.val().usernameCanonical || "") : "";
+
+      const usernameRef = ref(db, `usernames/${canonical}`);
+      const tx = await runTransaction(usernameRef, (current) => {
+        if (current === null || current.emailKey === eKey) {
+          return {
+            emailKey: eKey,
+            usernameDisplay: display,
+            updatedAt: Date.now()
+          };
+        }
+        return;
+      });
+
+      if (!tx.committed) {
+        return { ok: false, reason: "taken" };
+      }
+
+      if (oldCanonical && oldCanonical !== canonical) {
+        const oldRef = ref(db, `usernames/${oldCanonical}`);
+        const oldSnap = await get(oldRef);
+        if (oldSnap.exists() && oldSnap.val()?.emailKey === eKey) {
+          await remove(oldRef);
+        }
+      }
+
+      await set(userRef, {
+        uid: user.uid || "",
+        email,
+        usernameDisplay: display,
+        usernameCanonical: canonical,
+        updatedAt: Date.now()
+      });
+
+      return { ok: true, usernameDisplay: display };
+    }
+
+    async function loadUsernameFromDb(user) {
+      const email = user?.email || "";
+      if (!email) return "";
+      const eKey = emailKey(email);
+      const snap = await get(ref(db, `usersByEmail/${eKey}`));
+      if (!snap.exists()) return "";
+      const v = snap.val() || {};
+      return (v.usernameDisplay || "").trim();
+    }
+
+    function toMain() {
+      window.location.href = "./main.html";
+    }
+
+    function setStatus(message, type = "") {
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`.trim();
+    }
+
+    function setSignedOutUI() {
+      googleBtn.style.display = "block";
+      playBtn.style.display = "none";
+      logoutBtn.style.display = "none";
+      nameWrap.style.display = "none";
+      userBox.style.display = "none";
+      firstNameInput.value = "";
+    }
+
+    function setSignedInUI(user, firstName) {
+      googleBtn.style.display = "none";
+      playBtn.style.display = "block";
+      logoutBtn.style.display = "block";
+      nameWrap.style.display = firstName ? "none" : "flex";
+      userBox.style.display = "flex";
+      userName.textContent = firstName || user.displayName || "Player";
+      userEmail.textContent = user.email || "";
+      avatar.src = user.photoURL || "";
+      playBtn.textContent = firstName ? "Continue to Main" : "Save your username first";
+      playBtn.disabled = !firstName;
+    }
+
+    googleBtn.addEventListener("click", async () => {
+      googleBtn.disabled = true;
+      setStatus("Opening Google sign-in...", "");
+      try {
+        await signInWithPopup(auth, provider);
+        setStatus("Signed in successfully.", "ok");
+      } catch (err) {
+        const code = err?.code || "";
+        if (code === "auth/popup-blocked" || code === "auth/cancelled-popup-request" || code === "auth/popup-closed-by-user") {
+          setStatus("Popup blocked. Switching to redirect sign-in...", "");
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+        setStatus(err?.message || "Google sign-in failed.", "error");
+      } finally {
+        googleBtn.disabled = false;
+      }
+    });
+
+    playBtn.addEventListener("click", () => {
+      if (!currentUser) return;
+      const firstName = getSavedFirstName(currentUser.uid);
+      if (!firstName) {
+        nameWrap.style.display = "flex";
+        setStatus("Choose your username / character name before continuing.", "error");
+        return;
+      }
+      playBtn.disabled = true;
+      setStatus("Saving profile...", "");
+      upsertUsernameForUser(currentUser, firstName)
+        .then((res) => {
+          if (!res.ok) {
+            if (res.reason === "taken") {
+              setStatus("That username is already taken. Pick another one.", "error");
+              nameWrap.style.display = "flex";
+            } else {
+              setStatus("Could not save profile. Try again.", "error");
+            }
+            return;
+          }
+          setStatus("Profile saved. Entering main...", "ok");
+          toMain();
+        })
+        .finally(() => {
+          playBtn.disabled = false;
+        });
+    });
+
+    saveNameBtn.addEventListener("click", async () => {
+      if (!currentUser) return;
+      const raw = firstNameInput.value.trim();
+      if (!/^[A-Za-z0-9_ -]{3,24}$/.test(raw)) {
+        setStatus("Use 3-24 chars: letters, numbers, spaces, _ or -.", "error");
+        return;
+      }
+      const firstName = normalizeUsername(raw);
+      saveNameBtn.disabled = true;
+      setStatus("Checking username availability...", "");
+      try {
+        const res = await upsertUsernameForUser(currentUser, firstName);
+        if (!res.ok) {
+          if (res.reason === "taken") {
+            setStatus("Username already taken. Please choose another.", "error");
+          } else if (res.reason === "missing-email") {
+            setStatus("Your account has no email; cannot create username.", "error");
+          } else {
+            setStatus("Could not save username. Try again.", "error");
+          }
+          return;
+        }
+        saveFirstName(currentUser.uid, res.usernameDisplay);
+        setSignedInUI(currentUser, res.usernameDisplay);
+        setStatus(`Username saved: ${res.usernameDisplay}. Click Continue.`, "ok");
+      } catch (err) {
+        setStatus(err?.message || "Username save failed.", "error");
+      } finally {
+        saveNameBtn.disabled = false;
+      }
+    });
+
+    firstNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") saveNameBtn.click();
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        setStatus("Signed out.", "");
+      } catch (err) {
+        setStatus(err?.message || "Sign out failed.", "error");
+      }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if (user) {
+        try {
+          let firstName = getSavedFirstName(user.uid);
+          if (!firstName) {
+            firstName = await loadUsernameFromDb(user);
+            if (firstName) saveFirstName(user.uid, firstName);
+          }
+          setSignedInUI(user, firstName);
+          if (firstName) {
+            setStatus(`Welcome back, ${firstName}.`, "ok");
+          } else {
+            setStatus("Set your character name / username to continue.", "");
+            firstNameInput.focus();
+          }
+        } catch (err) {
+          setSignedInUI(user, "");
+          setStatus(err?.message || "Could not load profile from database.", "error");
+        }
+      } else {
+        setSignedOutUI();
+        setStatus("Sign in with Google to continue.", "");
+      }
+    });
+
+    getRedirectResult(auth).catch((err) => {
+      setStatus(err?.message || "Google redirect sign-in failed.", "error");
+    });
+  </script>
+</body>
+</html>
