@@ -4036,7 +4036,7 @@ function replacePlayersWithFbx(){
  const playerIdleUrl = "./models/Offensive%20Idle.fbx";
  const aiIdleUrl = "./models/Offensive%20Idle.fbx";
  const runUrl = "./models/Running.fbx";
- const hitUrl = "./models/Tennis%20Hit.fbx";
+  const hitUrl = "./models/hit.fbx";
  const serveUrl = "./models/serve.fbx";
  const walkUrl = "./models/Walking.fbx";
  const celebrateUrl = "./models/celebrate.fbx";
@@ -4687,28 +4687,6 @@ async function hideLoadingOverlay(){
  loadingOverlay.classList.add("hidden");
  await sleep(560);
 }
-setLoadingStage(8, "Preparing center court...", "Calibrating cameras, lights, and crowd mics");
-startLoadingTicker();
-replacePlayersWithFbx()
- .then(async ()=>{
-  // Freeze rally adjudication before coin toss starts to avoid startup false calls.
-  awaitingNextPointStart = true;
-  ballVel.set(0, 0, 0);
-  ballSpin.set(0, 0, 0);
-  ball.position.y = Math.max(ball.position.y, BALL_RADIUS);
-  setLoadingStage(100, "Match ready", "Starting coin toss...");
-  await hideLoadingOverlay();
-  await runCoinFlipAndStartMatch();
- })
- .catch((err)=>{
-  console.error("Model load failed, match will not start.", err);
-  awaitingNextPointStart = true;
-  ballVel.set(0, 0, 0);
-  ballSpin.set(0, 0, 0);
-  setLoadingStage(100, "Load failed", "Model package missing. Using fallback HUD.");
-  hideLoadingOverlay();
-  showRallyCallout("Model load failed");
- });
 let serveClickQueued = false;
 let serveAttemptsLeft = 2;
 const PLAYER_BASE_Y = 1.35;
@@ -6596,7 +6574,8 @@ const AI_COURT_PROFILES = Object.freeze({
    spin: 1.22
   }
 });
-const ACTIVE_AI_COURT_PROFILE = AI_COURT_PROFILES[ACTIVE_COURT_KEY] || AI_COURT_PROFILES.hard;
+// Tutorial matches always use the default hard court; this page has no court selector.
+const ACTIVE_AI_COURT_PROFILE = AI_COURT_PROFILES.hard;
 
 function getCourtAwareAiModifier(value, fallback = 1.0){
  return typeof value === "number" ? value : fallback;
@@ -8821,6 +8800,29 @@ window.addEventListener("resize",()=>{
  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_RENDER_PIXEL_RATIO));
  renderer.setSize(innerWidth,innerHeight);
 });
+
+// Start only after the module has initialized all gameplay state used by the loaders and match flow.
+setLoadingStage(8, "Preparing center court...", "Calibrating cameras, lights, and crowd mics");
+startLoadingTicker();
+replacePlayersWithFbx()
+ .then(async ()=>{
+  awaitingNextPointStart = true;
+  ballVel.set(0, 0, 0);
+  ballSpin.set(0, 0, 0);
+  ball.position.y = Math.max(ball.position.y, BALL_RADIUS);
+  setLoadingStage(100, "Match ready", "Starting coin toss...");
+  await hideLoadingOverlay();
+  await runCoinFlipAndStartMatch();
+ })
+ .catch((err)=>{
+  console.error("Model load failed, match will not start.", err);
+  awaitingNextPointStart = true;
+  ballVel.set(0, 0, 0);
+  ballSpin.set(0, 0, 0);
+  setLoadingStage(100, "Load failed", "Model package missing. Using fallback HUD.");
+  hideLoadingOverlay();
+  showRallyCallout("Model load failed");
+ });
 </script>
 </body>
 </html>
