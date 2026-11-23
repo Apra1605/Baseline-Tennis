@@ -28,15 +28,8 @@ There is no npm build step or package manifest at present.
 
 1. Install a modern desktop browser (Chrome or Edge recommended) and Python 3. Alternatively, use any static HTTP server.
 2. Download or clone this repository and open a terminal in its root directory.
-3. Start a local web server:
-
-   ```powershell
-   py -m http.server 8000
-   ```
-
-   On systems where `py` is unavailable, use `python -m http.server 8000`.
-
-4. Visit [http://localhost:8000](http://localhost:8000) and open `index.html`. You can also open `main.html` directly to skip the sign-in page.
+3. Start a local web server: py -m http.server 8000
+4. Visit http://localhost:8000 and open `index.html`. You can also open `main.html` directly to skip the sign-in page.
 
 Use the HTTP address rather than opening the HTML files with `file://`: browser module imports and asset loading may be blocked or behave differently when opened directly. Keep the server running while playing. An internet connection is required for the CDN-hosted Three.js modules and Firebase services.
 
@@ -48,7 +41,7 @@ If Firebase is unavailable, you can still try opening `main.html` directly throu
 
 ## Controls
 
-Controls are shown in the in-game pause/control screens and can vary by mode. The game supports keyboard controls and gamepad input in match play. In local multiplayer, each player uses a separate keyboard key group. Check the Controls screen before starting a match for the current bindings and shot actions.
+Controls are shown in the in-game pause/control screens and can vary by mode. The game supports ONLY gamepad input in match play. Check the Controls screen before starting a match for the current bindings and shot actions.
 
 ## Development notes and challenges
 
